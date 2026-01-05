@@ -25,7 +25,8 @@
     "docker:restart": "docker compose restart",
     "bin:start": "./bin/start.sh",
     "bin:stop": "./bin/stop.sh",
-    "bin:generate-secrets": "./bin/generate-secrets.sh"
+    "bin:generate-secrets": "./bin/generate-secrets.sh",
+    "bin:claude-code-setup": "./bin/claude-code-setup.sh"
   },
   "keywords": [
     "mcp",

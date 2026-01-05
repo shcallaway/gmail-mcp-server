@@ -285,6 +285,18 @@ npm run lint
 npx vitest run tests/unit/crypto.test.ts
 ```
 
+## Claude Code Integration
+
+Install custom Claude Code agents for enhanced Gmail workflows:
+
+```bash
+npm run bin:claude-code-setup
+```
+
+This installs the **inbox-explorer** agent, which analyzes and summarizes Gmail inboxes. Use it by asking Claude Code to explore your inbox:
+
+> "Explore my Gmail inbox and tell me what needs attention"
+
 ## Error Handling
 
 The server uses JSON-RPC error codes:
