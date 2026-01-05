@@ -79,19 +79,22 @@ npm run dev
 The easiest way to deploy anywhere:
 
 ```bash
-# Quick start with docker compose
-docker compose up -d
+# Shell scripts (recommended)
+./scripts/start.sh    # Start with health check and status
+./scripts/stop.sh     # Stop the server
 
-# Or build and run manually
-docker build -t gmail-mcp .
-docker run -d -p 3000:3000 --env-file .env -v ./data:/app/data gmail-mcp
+# npm scripts
+npm run docker:up     # Start in background
+npm run docker:down   # Stop
+npm run docker:logs   # Tail logs
+npm run docker:restart
+npm run docker:build  # Rebuild image
 ```
 
-```bash
-# View logs
-docker compose logs -f
+Or run Docker commands directly:
 
-# Stop
+```bash
+docker compose up -d
 docker compose down
 ```
 
