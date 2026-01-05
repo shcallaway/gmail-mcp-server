@@ -2,6 +2,21 @@
 
 An MCP (Model Context Protocol) server that exposes Gmail tools via Streamable HTTP transport. Enables AI assistants to read, search, organize, and draft emails in your Gmail inbox.
 
+## Quickstart
+
+```bash
+# Clone and configure
+git clone https://github.com/shcallaway/gmail-mcp-server.git
+cd gmail-mcp-server
+cp .env.example .env
+# Edit .env with your Google OAuth credentials and secrets
+
+# Run with Docker
+./scripts/start.sh
+```
+
+Server runs at `http://localhost:3000`. Connect your Gmail at `/oauth/start`.
+
 ## Features
 
 - **26 Gmail tools** for comprehensive inbox management
