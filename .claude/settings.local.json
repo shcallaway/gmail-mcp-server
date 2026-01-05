@@ -15,7 +15,10 @@
       "mcp__gmail-mcp__gmail_listLabels",
       "mcp__gmail-mcp__gmail_listDrafts",
       "mcp__gmail-mcp__gmail_getDraft",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(npm run bin:claude-code-setup:*)",
+      "Bash(npm run bin:cc-install-subagents:*)",
+      "Bash(npm run bin:cc-install-mcp-server:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

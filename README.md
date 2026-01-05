@@ -287,13 +287,25 @@ npx vitest run tests/unit/crypto.test.ts
 
 ## Claude Code Integration
 
-Install custom Claude Code agents for enhanced Gmail workflows:
+### Install MCP Server
+
+Add the Gmail MCP server to your Claude Code configuration:
 
 ```bash
-npm run bin:claude-code-setup
+npm run bin:cc-install-mcp-server
 ```
 
-This installs the **inbox-explorer** agent, which analyzes and summarizes Gmail inboxes. Use it by asking Claude Code to explore your inbox:
+This adds the server to `~/.claude.json`. Make sure the server is running first.
+
+### Install Subagents
+
+Install custom Claude Code subagents for enhanced Gmail workflows:
+
+```bash
+npm run bin:cc-install-subagents
+```
+
+This installs the **inbox-explorer** agent, which analyzes and summarizes Gmail inboxes. Use it by asking Claude Code:
 
 > "Explore my Gmail inbox and tell me what needs attention"
 
