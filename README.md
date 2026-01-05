@@ -33,6 +33,35 @@ Server runs at `http://localhost:3000`. Connect your Gmail at `/oauth/start`.
 - Google Cloud project with Gmail API enabled
 - OAuth 2.0 credentials (Web application type)
 
+## Google Cloud Setup
+
+1. **Create a project** at [console.cloud.google.com](https://console.cloud.google.com)
+
+2. **Enable the Gmail API**
+   - Go to APIs & Services → Library
+   - Search for "Gmail API" and enable it
+
+3. **Configure OAuth consent screen**
+   - Go to APIs & Services → OAuth consent screen
+   - Choose "External" user type
+   - Fill in app name and support email
+   - Add scopes: `gmail.readonly`, `gmail.labels`, `gmail.compose`
+   - Add your email as a test user
+
+4. **Create OAuth credentials**
+   - Go to APIs & Services → Credentials
+   - Click "Create Credentials" → "OAuth client ID"
+   - Choose "Web application"
+   - Add authorized redirect URI: `http://localhost:3000/oauth/callback`
+   - Copy the Client ID and Client Secret
+
+5. **Add to .env**
+   ```
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   OAUTH_REDIRECT_URI=http://localhost:3000/oauth/callback
+   ```
+
 ## Installation
 
 ```bash
