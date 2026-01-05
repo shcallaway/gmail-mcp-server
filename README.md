@@ -5,11 +5,13 @@ An MCP (Model Context Protocol) server that exposes Gmail tools via Streamable H
 ## Quickstart
 
 ```bash
-# Clone and configure
+# Clone and setup
 git clone https://github.com/shcallaway/gmail-mcp-server.git
 cd gmail-mcp-server
-cp .env.example .env
-# Edit .env with your Google OAuth credentials and secrets
+
+# Generate secrets and create .env
+./scripts/generate-secrets.sh
+# Edit .env to add your Google OAuth credentials
 
 # Run with Docker
 ./scripts/start.sh
@@ -71,11 +73,11 @@ cp .env.example .env
 ### Generating Secrets
 
 ```bash
-# Generate TOKEN_ENCRYPTION_KEY (32 bytes, base64)
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+# Generate and optionally save to .env
+./scripts/generate-secrets.sh
 
-# Generate JWT_SECRET
-node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+# Or use npm
+npm run generate-secrets
 ```
 
 ## Running the Server

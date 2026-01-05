@@ -4,6 +4,12 @@
   "description": "MCP server exposing read-only Gmail inbox tools",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "gmail-mcp": "./dist/index.js",
+    "gmail-mcp-start": "./scripts/start.sh",
+    "gmail-mcp-stop": "./scripts/stop.sh",
+    "gmail-mcp-generate-secrets": "./scripts/generate-secrets.sh"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -16,7 +22,8 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "docker:restart": "docker compose restart"
+    "docker:restart": "docker compose restart",
+    "generate-secrets": "./scripts/generate-secrets.sh"
   },
   "keywords": [
     "mcp",
