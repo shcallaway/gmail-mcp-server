@@ -36,7 +36,7 @@ async function main() {
   let mcpServer;
   try {
     mcpServer = await createMcpServer({ config, tokenStore });
-    console.log('MCP server created with 13 tools:');
+    console.log('MCP server created with 23 tools:');
     console.log('  - gmail.authorize, gmail.status');
     console.log('  - gmail.searchMessages, gmail.getMessage');
     console.log('  - gmail.listThreads, gmail.getThread');
@@ -44,6 +44,10 @@ async function main() {
     console.log('  - gmail.archiveMessages, gmail.unarchiveMessages');
     console.log('  - gmail.markAsRead, gmail.markAsUnread');
     console.log('  - gmail.starMessages, gmail.unstarMessages');
+    console.log('  - gmail.getLabelInfo, gmail.listLabels');
+    console.log('  - gmail.addLabels, gmail.removeLabels, gmail.createLabel');
+    console.log('  - gmail.createDraft, gmail.listDrafts, gmail.getDraft');
+    console.log('  - gmail.updateDraft, gmail.deleteDraft');
   } catch (error) {
     console.error('Failed to create MCP server:', error);
     await tokenStore.close();

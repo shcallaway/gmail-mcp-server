@@ -20,6 +20,7 @@ import { encrypt } from '../utils/crypto.js';
 export const GMAIL_SCOPES = {
   'gmail.readonly': 'https://www.googleapis.com/auth/gmail.readonly',
   'gmail.labels': 'https://www.googleapis.com/auth/gmail.labels',
+  'gmail.compose': 'https://www.googleapis.com/auth/gmail.compose',
 } as const;
 
 export type GmailScope = keyof typeof GMAIL_SCOPES;
@@ -229,34 +230,11 @@ export function createGoogleOAuth(deps: GoogleOAuthDependencies) {
         <head>
           <meta charset="utf-8">
           <title>Gmail Connected</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              margin: 0;
-              background: #f5f5f5;
-            }
-            .container {
-              text-align: center;
-              padding: 40px;
-              background: white;
-              border-radius: 8px;
-              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
-            h1 { color: #1a73e8; margin-bottom: 10px; }
-            p { color: #5f6368; }
-            .email { font-weight: bold; color: #202124; }
-          </style>
         </head>
         <body>
-          <div class="container">
-            <h1>✓ Gmail Connected</h1>
-            <p>Successfully connected as <span class="email">${profile.data.emailAddress}</span></p>
-            <p>You can now close this window and return to your application.</p>
-          </div>
+          <h1>Gmail Connected</h1>
+          <p>Successfully connected as <strong>${profile.data.emailAddress}</strong></p>
+          <p>You can now close this window and return to your application.</p>
         </body>
         </html>
       `);

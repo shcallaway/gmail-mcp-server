@@ -154,7 +154,7 @@ export async function createMcpServer(deps: McpServerDependencies): Promise<McpS
     {
       description: 'Initiates the OAuth consent flow to connect Gmail',
       inputSchema: {
-        scopes: z.array(z.enum(['gmail.readonly', 'gmail.labels'])).optional(),
+        scopes: z.array(z.enum(['gmail.readonly', 'gmail.labels', 'gmail.compose'])).optional(),
       },
     },
     async (args, extra) => {
@@ -526,6 +526,265 @@ export async function createMcpServer(deps: McpServerDependencies): Promise<McpS
 
       try {
         const result = await gmailClient.unstarMessages(mcpUserId, args.messageIds, args.threadIds);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.getLabelInfo tool
+  server.registerTool(
+    'gmail.getLabelInfo',
+    {
+      description: 'Get information about a label including message counts. Common labels: INBOX, UNREAD, STARRED, SENT, DRAFT, TRASH, SPAM.',
+      inputSchema: {
+        labelId: z.string().describe('The label ID (e.g., "INBOX", "UNREAD", "STARRED", or custom label ID)'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.getLabelInfo(mcpUserId, args.labelId);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.listLabels tool
+  server.registerTool(
+    'gmail.listLabels',
+    {
+      description: 'List all labels with their message counts',
+    },
+    async (extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.listLabels(mcpUserId);
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ labels: result }) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.addLabels tool
+  server.registerTool(
+    'gmail.addLabels',
+    {
+      description: 'Add labels to messages or threads. Requires gmail.labels scope.',
+      inputSchema: {
+        messageIds: z.array(z.string()).optional().describe('Array of message IDs to modify'),
+        threadIds: z.array(z.string()).optional().describe('Array of thread IDs to modify'),
+        labelIds: z.array(z.string()).describe('Array of label IDs to add'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      if (!args.messageIds?.length && !args.threadIds?.length) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: 'At least one messageId or threadId must be provided', code: -32602 }) }],
+          isError: true,
+        };
+      }
+
+      if (!args.labelIds?.length) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: 'At least one labelId must be provided', code: -32602 }) }],
+          isError: true,
+        };
+      }
+
+      try {
+        const result = await gmailClient.addLabels(mcpUserId, args.messageIds, args.threadIds, args.labelIds);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.removeLabels tool
+  server.registerTool(
+    'gmail.removeLabels',
+    {
+      description: 'Remove labels from messages or threads. Requires gmail.labels scope.',
+      inputSchema: {
+        messageIds: z.array(z.string()).optional().describe('Array of message IDs to modify'),
+        threadIds: z.array(z.string()).optional().describe('Array of thread IDs to modify'),
+        labelIds: z.array(z.string()).describe('Array of label IDs to remove'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      if (!args.messageIds?.length && !args.threadIds?.length) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: 'At least one messageId or threadId must be provided', code: -32602 }) }],
+          isError: true,
+        };
+      }
+
+      if (!args.labelIds?.length) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: 'At least one labelId must be provided', code: -32602 }) }],
+          isError: true,
+        };
+      }
+
+      try {
+        const result = await gmailClient.removeLabels(mcpUserId, args.messageIds, args.threadIds, args.labelIds);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.createLabel tool
+  server.registerTool(
+    'gmail.createLabel',
+    {
+      description: 'Create a new custom label. Requires gmail.labels scope.',
+      inputSchema: {
+        name: z.string().describe('Name for the new label'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.createLabel(mcpUserId, args.name);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.createDraft tool
+  server.registerTool(
+    'gmail.createDraft',
+    {
+      description: 'Create a new draft email. Requires gmail.compose scope.',
+      inputSchema: {
+        to: z.union([z.string(), z.array(z.string())]).describe('Recipient email address(es)'),
+        subject: z.string().describe('Email subject'),
+        body: z.string().describe('Email body content'),
+        cc: z.union([z.string(), z.array(z.string())]).optional().describe('CC recipient(s)'),
+        bcc: z.union([z.string(), z.array(z.string())]).optional().describe('BCC recipient(s)'),
+        isHtml: z.boolean().optional().describe('Whether body is HTML (default: false, plain text)'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.createDraft(mcpUserId, args.to, args.subject, args.body, {
+          cc: args.cc,
+          bcc: args.bcc,
+          isHtml: args.isHtml,
+        });
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.listDrafts tool
+  server.registerTool(
+    'gmail.listDrafts',
+    {
+      description: 'List all draft emails',
+      inputSchema: {
+        maxResults: z.number().int().min(1).max(100).optional().describe('Maximum results (1-100, default 20)'),
+        pageToken: z.string().optional().describe('Token for pagination'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.listDrafts(mcpUserId, args.maxResults ?? 20, args.pageToken);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.getDraft tool
+  server.registerTool(
+    'gmail.getDraft',
+    {
+      description: 'Get a draft with full content',
+      inputSchema: {
+        draftId: z.string().describe('The draft ID'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.getDraft(mcpUserId, args.draftId);
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.updateDraft tool
+  server.registerTool(
+    'gmail.updateDraft',
+    {
+      description: 'Update an existing draft. Requires gmail.compose scope.',
+      inputSchema: {
+        draftId: z.string().describe('The draft ID to update'),
+        to: z.union([z.string(), z.array(z.string())]).describe('Recipient email address(es)'),
+        subject: z.string().describe('Email subject'),
+        body: z.string().describe('Email body content'),
+        cc: z.union([z.string(), z.array(z.string())]).optional().describe('CC recipient(s)'),
+        bcc: z.union([z.string(), z.array(z.string())]).optional().describe('BCC recipient(s)'),
+        isHtml: z.boolean().optional().describe('Whether body is HTML (default: false, plain text)'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.updateDraft(mcpUserId, args.draftId, args.to, args.subject, args.body, {
+          cc: args.cc,
+          bcc: args.bcc,
+          isHtml: args.isHtml,
+        });
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Register gmail.deleteDraft tool
+  server.registerTool(
+    'gmail.deleteDraft',
+    {
+      description: 'Delete a draft. Requires gmail.compose scope.',
+      inputSchema: {
+        draftId: z.string().describe('The draft ID to delete'),
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const result = await gmailClient.deleteDraft(mcpUserId, args.draftId);
         return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
       } catch (error) {
         return formatError(error);

@@ -52,8 +52,17 @@ export interface AttachmentMetadata {
   size: number;
 }
 
+export interface SearchResultMessage {
+  id: string;
+  threadId: string;
+  snippet?: string;
+  subject?: string;
+  from?: string;
+  date?: string;
+}
+
 export interface SearchResult {
-  messages: Array<{ id: string; threadId: string }>;
+  messages: SearchResultMessage[];
   nextPageToken?: string;
 }
 
@@ -74,8 +83,38 @@ export interface BatchModifyResult {
   failureCount: number;
 }
 
-// Gmail label scope required for modifications
+export interface LabelInfo {
+  id: string;
+  name: string;
+  messagesTotal: number;
+  messagesUnread: number;
+  threadsTotal: number;
+  threadsUnread: number;
+}
+
+export interface DraftInfo {
+  id: string;
+  messageId: string;
+  snippet: string;
+  subject?: string;
+  to?: string;
+}
+
+export interface DraftContent extends DraftInfo {
+  body?: {
+    text?: string;
+    html?: string;
+  };
+}
+
+export interface DraftListResult {
+  drafts: DraftInfo[];
+  nextPageToken?: string;
+}
+
+// Gmail scopes
 const GMAIL_LABELS_SCOPE = 'https://www.googleapis.com/auth/gmail.labels';
+const GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose';
 
 // Token refresh threshold (5 minutes before expiry)
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
@@ -179,6 +218,7 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
 
   /**
    * Search messages using Gmail query syntax.
+   * Returns messages with metadata (snippet, subject, from, date).
    */
   async function searchMessages(
     mcpUserId: string,
@@ -196,11 +236,45 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
         pageToken,
       });
 
+      const messageList = response.data.messages ?? [];
+
+      // Fetch metadata for each message
+      const messages: SearchResultMessage[] = [];
+      for (const m of messageList) {
+        if (!m.id || !m.threadId) continue;
+
+        try {
+          const msgResponse = await gmail.users.messages.get({
+            userId: 'me',
+            id: m.id,
+            format: 'metadata',
+            metadataHeaders: ['From', 'Subject', 'Date'],
+          });
+
+          const headers = msgResponse.data.payload?.headers ?? [];
+          const fromHeader = headers.find((h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'from');
+          const subjectHeader = headers.find((h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'subject');
+          const dateHeader = headers.find((h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'date');
+
+          messages.push({
+            id: m.id,
+            threadId: m.threadId,
+            snippet: msgResponse.data.snippet ?? undefined,
+            subject: subjectHeader?.value ?? undefined,
+            from: fromHeader?.value ?? undefined,
+            date: dateHeader?.value ?? undefined,
+          });
+        } catch {
+          // If metadata fetch fails, include basic info
+          messages.push({
+            id: m.id,
+            threadId: m.threadId,
+          });
+        }
+      }
+
       return {
-        messages: (response.data.messages ?? []).map(m => ({
-          id: m.id!,
-          threadId: m.threadId!,
-        })),
+        messages,
         nextPageToken: response.data.nextPageToken ?? undefined,
       };
     } catch (error: unknown) {
@@ -544,6 +618,344 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
     return batchModify(mcpUserId, messageIds, threadIds, [], ['STARRED']);
   }
 
+  // ============== LABEL METHODS ==============
+
+  /**
+   * Get information about a label including message counts.
+   */
+  async function getLabelInfo(mcpUserId: string, labelId: string): Promise<LabelInfo> {
+    const gmail = await getGmailClient(mcpUserId);
+
+    try {
+      const response = await gmail.users.labels.get({
+        userId: 'me',
+        id: labelId,
+      });
+
+      const label = response.data;
+      return {
+        id: label.id!,
+        name: label.name!,
+        messagesTotal: label.messagesTotal ?? 0,
+        messagesUnread: label.messagesUnread ?? 0,
+        threadsTotal: label.threadsTotal ?? 0,
+        threadsUnread: label.threadsUnread ?? 0,
+      };
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
+  /**
+   * List all labels.
+   */
+  async function listLabels(mcpUserId: string): Promise<LabelInfo[]> {
+    const gmail = await getGmailClient(mcpUserId);
+
+    try {
+      const response = await gmail.users.labels.list({
+        userId: 'me',
+      });
+
+      const labels = response.data.labels ?? [];
+
+      // Fetch full info for each label to get counts
+      const labelInfos: LabelInfo[] = [];
+      for (const label of labels) {
+        if (label.id) {
+          try {
+            const info = await getLabelInfo(mcpUserId, label.id);
+            labelInfos.push(info);
+          } catch {
+            // Skip labels that fail (e.g., system labels without counts)
+            labelInfos.push({
+              id: label.id,
+              name: label.name ?? label.id,
+              messagesTotal: 0,
+              messagesUnread: 0,
+              threadsTotal: 0,
+              threadsUnread: 0,
+            });
+          }
+        }
+      }
+
+      return labelInfos;
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
+  /**
+   * Add labels to messages/threads.
+   */
+  async function addLabels(
+    mcpUserId: string,
+    messageIds: string[] | undefined,
+    threadIds: string[] | undefined,
+    labelIds: string[]
+  ): Promise<BatchModifyResult> {
+    return batchModify(mcpUserId, messageIds, threadIds, labelIds, []);
+  }
+
+  /**
+   * Remove labels from messages/threads.
+   */
+  async function removeLabels(
+    mcpUserId: string,
+    messageIds: string[] | undefined,
+    threadIds: string[] | undefined,
+    labelIds: string[]
+  ): Promise<BatchModifyResult> {
+    return batchModify(mcpUserId, messageIds, threadIds, [], labelIds);
+  }
+
+  /**
+   * Create a new label.
+   */
+  async function createLabel(
+    mcpUserId: string,
+    name: string
+  ): Promise<{ id: string; name: string }> {
+    await checkScope(mcpUserId, GMAIL_LABELS_SCOPE);
+    const gmail = await getGmailClient(mcpUserId);
+
+    try {
+      const response = await gmail.users.labels.create({
+        userId: 'me',
+        requestBody: {
+          name,
+          labelListVisibility: 'labelShow',
+          messageListVisibility: 'show',
+        },
+      });
+
+      return {
+        id: response.data.id!,
+        name: response.data.name!,
+      };
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
+  // ============== DRAFT METHODS ==============
+
+  /**
+   * Create a new draft email.
+   */
+  async function createDraft(
+    mcpUserId: string,
+    to: string | string[],
+    subject: string,
+    body: string,
+    options?: {
+      cc?: string | string[];
+      bcc?: string | string[];
+      isHtml?: boolean;
+    }
+  ): Promise<{ draftId: string; messageId: string }> {
+    await checkScope(mcpUserId, GMAIL_COMPOSE_SCOPE);
+    const gmail = await getGmailClient(mcpUserId);
+
+    // Build email headers
+    const toAddrs = Array.isArray(to) ? to.join(', ') : to;
+    const ccAddrs = options?.cc ? (Array.isArray(options.cc) ? options.cc.join(', ') : options.cc) : '';
+    const bccAddrs = options?.bcc ? (Array.isArray(options.bcc) ? options.bcc.join(', ') : options.bcc) : '';
+
+    const contentType = options?.isHtml ? 'text/html' : 'text/plain';
+
+    // Build raw email
+    let email = `To: ${toAddrs}\r\n`;
+    if (ccAddrs) email += `Cc: ${ccAddrs}\r\n`;
+    if (bccAddrs) email += `Bcc: ${bccAddrs}\r\n`;
+    email += `Subject: ${subject}\r\n`;
+    email += `Content-Type: ${contentType}; charset=utf-8\r\n\r\n`;
+    email += body;
+
+    // Base64url encode
+    const encodedEmail = Buffer.from(email).toString('base64url');
+
+    try {
+      const response = await gmail.users.drafts.create({
+        userId: 'me',
+        requestBody: {
+          message: {
+            raw: encodedEmail,
+          },
+        },
+      });
+
+      return {
+        draftId: response.data.id!,
+        messageId: response.data.message?.id ?? '',
+      };
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
+  /**
+   * List drafts.
+   */
+  async function listDrafts(
+    mcpUserId: string,
+    maxResults: number = 20,
+    pageToken?: string
+  ): Promise<DraftListResult> {
+    const gmail = await getGmailClient(mcpUserId);
+
+    try {
+      const response = await gmail.users.drafts.list({
+        userId: 'me',
+        maxResults,
+        pageToken,
+      });
+
+      const drafts: DraftInfo[] = [];
+      for (const draft of response.data.drafts ?? []) {
+        // Fetch draft details to get snippet/subject
+        if (draft.id) {
+          try {
+            const draftDetail = await gmail.users.drafts.get({
+              userId: 'me',
+              id: draft.id,
+              format: 'metadata',
+            });
+
+            const message = draftDetail.data.message;
+            const headers = message?.payload?.headers ?? [];
+            const subjectHeader = headers.find((h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'subject');
+            const toHeader = headers.find((h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'to');
+
+            drafts.push({
+              id: draft.id,
+              messageId: message?.id ?? '',
+              snippet: message?.snippet ?? '',
+              subject: subjectHeader?.value ?? undefined,
+              to: toHeader?.value ?? undefined,
+            });
+          } catch {
+            drafts.push({
+              id: draft.id,
+              messageId: draft.message?.id ?? '',
+              snippet: '',
+            });
+          }
+        }
+      }
+
+      return {
+        drafts,
+        nextPageToken: response.data.nextPageToken ?? undefined,
+      };
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
+  /**
+   * Get a draft with full content.
+   */
+  async function getDraft(mcpUserId: string, draftId: string): Promise<DraftContent> {
+    const gmail = await getGmailClient(mcpUserId);
+
+    try {
+      const response = await gmail.users.drafts.get({
+        userId: 'me',
+        id: draftId,
+        format: 'full',
+      });
+
+      const message = response.data.message;
+      const headers = message?.payload?.headers ?? [];
+      const subjectHeader = headers.find((h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'subject');
+      const toHeader = headers.find((h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'to');
+
+      return {
+        id: response.data.id!,
+        messageId: message?.id ?? '',
+        snippet: message?.snippet ?? '',
+        subject: subjectHeader?.value ?? undefined,
+        to: toHeader?.value ?? undefined,
+        body: extractBody(message?.payload),
+      };
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
+  /**
+   * Update a draft.
+   */
+  async function updateDraft(
+    mcpUserId: string,
+    draftId: string,
+    to: string | string[],
+    subject: string,
+    body: string,
+    options?: {
+      cc?: string | string[];
+      bcc?: string | string[];
+      isHtml?: boolean;
+    }
+  ): Promise<{ draftId: string; messageId: string }> {
+    await checkScope(mcpUserId, GMAIL_COMPOSE_SCOPE);
+    const gmail = await getGmailClient(mcpUserId);
+
+    const toAddrs = Array.isArray(to) ? to.join(', ') : to;
+    const ccAddrs = options?.cc ? (Array.isArray(options.cc) ? options.cc.join(', ') : options.cc) : '';
+    const bccAddrs = options?.bcc ? (Array.isArray(options.bcc) ? options.bcc.join(', ') : options.bcc) : '';
+    const contentType = options?.isHtml ? 'text/html' : 'text/plain';
+
+    let email = `To: ${toAddrs}\r\n`;
+    if (ccAddrs) email += `Cc: ${ccAddrs}\r\n`;
+    if (bccAddrs) email += `Bcc: ${bccAddrs}\r\n`;
+    email += `Subject: ${subject}\r\n`;
+    email += `Content-Type: ${contentType}; charset=utf-8\r\n\r\n`;
+    email += body;
+
+    const encodedEmail = Buffer.from(email).toString('base64url');
+
+    try {
+      const response = await gmail.users.drafts.update({
+        userId: 'me',
+        id: draftId,
+        requestBody: {
+          message: {
+            raw: encodedEmail,
+          },
+        },
+      });
+
+      return {
+        draftId: response.data.id!,
+        messageId: response.data.message?.id ?? '',
+      };
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
+  /**
+   * Delete a draft.
+   */
+  async function deleteDraft(mcpUserId: string, draftId: string): Promise<{ success: boolean }> {
+    await checkScope(mcpUserId, GMAIL_COMPOSE_SCOPE);
+    const gmail = await getGmailClient(mcpUserId);
+
+    try {
+      await gmail.users.drafts.delete({
+        userId: 'me',
+        id: draftId,
+      });
+
+      return { success: true };
+    } catch (error: unknown) {
+      throw wrapGmailError(error);
+    }
+  }
+
   return {
     getValidCredentials,
     searchMessages,
@@ -562,6 +974,18 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
     markAsUnread,
     starMessages,
     unstarMessages,
+    // Label methods
+    getLabelInfo,
+    listLabels,
+    addLabels,
+    removeLabels,
+    createLabel,
+    // Draft methods
+    createDraft,
+    listDrafts,
+    getDraft,
+    updateDraft,
+    deleteDraft,
   };
 }
 
