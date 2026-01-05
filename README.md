@@ -5,16 +5,15 @@ An MCP (Model Context Protocol) server that exposes Gmail tools via Streamable H
 ## Quickstart
 
 ```bash
-# Clone and setup
 git clone https://github.com/shcallaway/gmail-mcp-server.git
 cd gmail-mcp-server
 
 # Generate secrets and create .env
-./scripts/generate-secrets.sh
+npm run bin:generate-secrets
 # Edit .env to add your Google OAuth credentials
 
-# Run with Docker
-./scripts/start.sh
+# Start the server
+npm run bin:start
 ```
 
 Server runs at `http://localhost:3000`. Connect your Gmail at `/oauth/start`.
@@ -96,23 +95,17 @@ npm run dev
 The easiest way to deploy anywhere:
 
 ```bash
-# Shell scripts (recommended)
-./scripts/start.sh    # Start with health check and status
-./scripts/stop.sh     # Stop the server
-
-# npm scripts
-npm run docker:up     # Start in background
-npm run docker:down   # Stop
-npm run docker:logs   # Tail logs
-npm run docker:restart
-npm run docker:build  # Rebuild image
+npm run bin:start             # Start with health check
+npm run bin:stop              # Stop the server
+npm run bin:generate-secrets  # Generate secrets for .env
 ```
 
-Or run Docker commands directly:
+Additional Docker commands:
 
 ```bash
-docker compose up -d
-docker compose down
+npm run docker:logs     # Tail logs
+npm run docker:restart  # Restart container
+npm run docker:build    # Rebuild image
 ```
 
 The SQLite database persists in `./data/` via volume mount.
