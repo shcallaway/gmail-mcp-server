@@ -1,64 +1,58 @@
 {
-  "name": "gmail-mcp",
-  "version": "1.0.0",
-  "description": "MCP server exposing read-only Gmail inbox tools",
-  "type": "module",
-  "main": "dist/index.js",
-  "bin": {
-    "gmail-mcp": "./dist/index.js",
-    "gmail-mcp-start": "./bin/start.sh",
-    "gmail-mcp-stop": "./bin/stop.sh",
-    "gmail-mcp-generate-secrets": "./bin/generate-secrets.sh"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "lint": "eslint src/",
-    "typecheck": "tsc --noEmit",
-    "docker:build": "docker compose build",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f",
-    "docker:restart": "docker compose restart",
-    "bin:build": "./bin/build.sh",
-    "bin:start": "./bin/start.sh",
-    "bin:stop": "./bin/stop.sh",
-    "bin:generate-secrets": "./bin/generate-secrets.sh",
-    "bin:cc-install-mcp-server": "./bin/cc-install-mcp-server.sh",
-    "bin:cc-install-subagents": "./bin/cc-install-subagents.sh"
-  },
-  "keywords": [
-    "mcp",
-    "gmail",
-    "model-context-protocol"
-  ],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "better-sqlite3": "^11.0.0",
-    "dotenv": "^17.2.3",
-    "fastify": "^5.0.0",
-    "googleapis": "^144.0.0",
-    "jsonwebtoken": "^9.0.0",
-    "pino-pretty": "^13.1.3",
-    "zod": "^3.23.0"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
-    "@types/jsonwebtoken": "^9.0.0",
-    "@types/node": "^22.0.0",
-    "eslint": "^9.0.0",
-    "prettier": "^3.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.6.0",
-    "vitest": "^2.0.0"
-  },
-  "engines": {
-    "node": ">=20.0.0"
-  },
-  "packageManager": "npm@11.4.1+sha512.fcee43884166b6f9c5d04535fb95650e9708b6948a1f797eddf40e9778646778a518dfa32651b1c62ff36f4ac42becf177ca46ca27d53f24b539190c8d91802b"
+	"name": "gmail-mcp",
+	"version": "1.0.0",
+	"description": "MCP server exposing read-only Gmail inbox tools",
+	"type": "module",
+	"main": "dist/index.js",
+	"bin": {
+		"gmail-mcp": "./dist/index.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "node dist/index.js",
+		"dev": "tsx watch src/index.ts",
+		"test": "vitest",
+		"test:coverage": "vitest --coverage",
+		"lint": "eslint src/",
+		"typecheck": "tsc --noEmit",
+		"docker:build": "docker compose build",
+		"docker:up": "docker compose up -d",
+		"docker:down": "docker compose down",
+		"docker:logs": "docker compose logs -f",
+		"docker:restart": "docker compose restart",
+		"bin:generate-secrets": "./bin/generate-secrets.sh",
+		"bin:cc-install-mcp-server": "./bin/cc-install-mcp-server.sh",
+		"bin:cc-install-subagents": "./bin/cc-install-subagents.sh"
+	},
+	"keywords": [
+		"mcp",
+		"gmail",
+		"model-context-protocol"
+	],
+	"author": "",
+	"license": "MIT",
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.0.0",
+		"better-sqlite3": "^11.0.0",
+		"dotenv": "^17.2.3",
+		"fastify": "^5.0.0",
+		"googleapis": "^144.0.0",
+		"jsonwebtoken": "^9.0.0",
+		"pino-pretty": "^13.1.3",
+		"zod": "^3.23.0"
+	},
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.0",
+		"@types/jsonwebtoken": "^9.0.0",
+		"@types/node": "^22.0.0",
+		"eslint": "^9.0.0",
+		"prettier": "^3.0.0",
+		"tsx": "^4.0.0",
+		"typescript": "^5.6.0",
+		"vitest": "^2.0.0"
+	},
+	"engines": {
+		"node": ">=20.0.0"
+	},
+	"packageManager": "npm@11.4.1+sha512.fcee43884166b6f9c5d04535fb95650e9708b6948a1f797eddf40e9778646778a518dfa32651b1c62ff36f4ac42becf177ca46ca27d53f24b539190c8d91802b"
 }

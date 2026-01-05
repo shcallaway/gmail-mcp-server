@@ -13,7 +13,7 @@ npm run bin:generate-secrets
 # Edit .env to add your Google OAuth credentials
 
 # Start the server
-npm run bin:start
+npm run docker:up
 ```
 
 Server runs at `http://localhost:3000`. Connect your Gmail at `/oauth/start`.
@@ -124,14 +124,8 @@ npm run dev
 The easiest way to deploy anywhere:
 
 ```bash
-npm run bin:start             # Start with health check
-npm run bin:stop              # Stop the server
-npm run bin:generate-secrets  # Generate secrets for .env
-```
-
-Additional Docker commands:
-
-```bash
+npm run docker:up       # Start the server
+npm run docker:down     # Stop the server
 npm run docker:logs     # Tail logs
 npm run docker:restart  # Restart container
 npm run docker:build    # Rebuild image
