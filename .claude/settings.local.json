@@ -14,7 +14,8 @@
       "mcp__gmail-mcp__gmail_getLabelInfo",
       "mcp__gmail-mcp__gmail_listLabels",
       "mcp__gmail-mcp__gmail_listDrafts",
-      "mcp__gmail-mcp__gmail_getDraft"
+      "mcp__gmail-mcp__gmail_getDraft",
+      "Bash(chmod:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -73,7 +73,7 @@ cp .env.example .env
 
 ```bash
 # Generate and optionally save to .env
-./scripts/generate-secrets.sh
+./bin/generate-secrets.sh
 
 # Or use npm
 npm run bin:generate-secrets

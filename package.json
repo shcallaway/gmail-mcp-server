@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "bin": {
     "gmail-mcp": "./dist/index.js",
-    "gmail-mcp-start": "./scripts/start.sh",
-    "gmail-mcp-stop": "./scripts/stop.sh",
-    "gmail-mcp-generate-secrets": "./scripts/generate-secrets.sh"
+    "gmail-mcp-start": "./bin/start.sh",
+    "gmail-mcp-stop": "./bin/stop.sh",
+    "gmail-mcp-generate-secrets": "./bin/generate-secrets.sh"
   },
   "scripts": {
     "build": "tsc",
@@ -23,9 +23,9 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "docker:restart": "docker compose restart",
-    "bin:start": "./scripts/start.sh",
-    "bin:stop": "./scripts/stop.sh",
-    "bin:generate-secrets": "./scripts/generate-secrets.sh"
+    "bin:start": "./bin/start.sh",
+    "bin:stop": "./bin/stop.sh",
+    "bin:generate-secrets": "./bin/generate-secrets.sh"
   },
   "keywords": [
     "mcp",
