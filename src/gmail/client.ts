@@ -848,6 +848,8 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
 
   /**
    * Create a new draft email.
+   * When replyToMessageId is provided, the draft will be threaded as a reply
+   * with proper In-Reply-To and References headers.
    */
   async function createDraft(
     mcpUserId: string,
@@ -858,11 +860,47 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
       cc?: string | string[];
       bcc?: string | string[];
       isHtml?: boolean;
+      replyToMessageId?: string;
     },
     email?: string
   ): Promise<{ draftId: string; messageId: string }> {
     await checkScope(mcpUserId, GMAIL_COMPOSE_SCOPE, email);
     const gmail = await getGmailClient(mcpUserId, email);
+
+    // Threading headers for replies
+    let inReplyTo = '';
+    let references = '';
+    let threadId: string | undefined;
+
+    if (options?.replyToMessageId) {
+      // Fetch the original message to get threading headers
+      const originalMsg = await gmail.users.messages.get({
+        userId: 'me',
+        id: options.replyToMessageId,
+        format: 'metadata',
+        metadataHeaders: ['Message-ID', 'References'],
+      });
+
+      threadId = originalMsg.data.threadId ?? undefined;
+
+      // Extract Message-ID from original
+      const messageIdHeader = originalMsg.data.payload?.headers?.find(
+        (h) => h.name?.toLowerCase() === 'message-id'
+      );
+      if (messageIdHeader?.value) {
+        inReplyTo = messageIdHeader.value;
+
+        // Build References: existing references + original message-id
+        const referencesHeader = originalMsg.data.payload?.headers?.find(
+          (h) => h.name?.toLowerCase() === 'references'
+        );
+        if (referencesHeader?.value) {
+          references = `${referencesHeader.value} ${inReplyTo}`;
+        } else {
+          references = inReplyTo;
+        }
+      }
+    }
 
     // Build email headers
     const toAddrs = Array.isArray(to) ? to.join(', ') : to;
@@ -875,6 +913,8 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
     let rawEmail = `To: ${toAddrs}\r\n`;
     if (ccAddrs) rawEmail += `Cc: ${ccAddrs}\r\n`;
     if (bccAddrs) rawEmail += `Bcc: ${bccAddrs}\r\n`;
+    if (inReplyTo) rawEmail += `In-Reply-To: ${inReplyTo}\r\n`;
+    if (references) rawEmail += `References: ${references}\r\n`;
     rawEmail += `Subject: ${subject}\r\n`;
     rawEmail += `Content-Type: ${contentType}; charset=utf-8\r\n\r\n`;
     rawEmail += body;
@@ -888,6 +928,7 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
         requestBody: {
           message: {
             raw: encodedEmail,
+            threadId,
           },
         },
       });
@@ -994,6 +1035,8 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
 
   /**
    * Update a draft.
+   * When replyToMessageId is provided, the draft will be threaded as a reply
+   * with proper In-Reply-To and References headers.
    */
   async function updateDraft(
     mcpUserId: string,
@@ -1005,11 +1048,47 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
       cc?: string | string[];
       bcc?: string | string[];
       isHtml?: boolean;
+      replyToMessageId?: string;
     },
     email?: string
   ): Promise<{ draftId: string; messageId: string }> {
     await checkScope(mcpUserId, GMAIL_COMPOSE_SCOPE, email);
     const gmail = await getGmailClient(mcpUserId, email);
+
+    // Threading headers for replies
+    let inReplyTo = '';
+    let references = '';
+    let threadId: string | undefined;
+
+    if (options?.replyToMessageId) {
+      // Fetch the original message to get threading headers
+      const originalMsg = await gmail.users.messages.get({
+        userId: 'me',
+        id: options.replyToMessageId,
+        format: 'metadata',
+        metadataHeaders: ['Message-ID', 'References'],
+      });
+
+      threadId = originalMsg.data.threadId ?? undefined;
+
+      // Extract Message-ID from original
+      const messageIdHeader = originalMsg.data.payload?.headers?.find(
+        (h) => h.name?.toLowerCase() === 'message-id'
+      );
+      if (messageIdHeader?.value) {
+        inReplyTo = messageIdHeader.value;
+
+        // Build References: existing references + original message-id
+        const referencesHeader = originalMsg.data.payload?.headers?.find(
+          (h) => h.name?.toLowerCase() === 'references'
+        );
+        if (referencesHeader?.value) {
+          references = `${referencesHeader.value} ${inReplyTo}`;
+        } else {
+          references = inReplyTo;
+        }
+      }
+    }
 
     const toAddrs = Array.isArray(to) ? to.join(', ') : to;
     const ccAddrs = options?.cc ? (Array.isArray(options.cc) ? options.cc.join(', ') : options.cc) : '';
@@ -1019,6 +1098,8 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
     let rawEmail = `To: ${toAddrs}\r\n`;
     if (ccAddrs) rawEmail += `Cc: ${ccAddrs}\r\n`;
     if (bccAddrs) rawEmail += `Bcc: ${bccAddrs}\r\n`;
+    if (inReplyTo) rawEmail += `In-Reply-To: ${inReplyTo}\r\n`;
+    if (references) rawEmail += `References: ${references}\r\n`;
     rawEmail += `Subject: ${subject}\r\n`;
     rawEmail += `Content-Type: ${contentType}; charset=utf-8\r\n\r\n`;
     rawEmail += body;
@@ -1032,6 +1113,7 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
         requestBody: {
           message: {
             raw: encodedEmail,
+            threadId,
           },
         },
       });

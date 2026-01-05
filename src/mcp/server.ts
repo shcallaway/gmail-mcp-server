@@ -742,6 +742,7 @@ export async function createMcpServer(deps: McpServerDependencies): Promise<McpS
         cc: z.union([z.string(), z.array(z.string())]).optional().describe('CC recipient(s)'),
         bcc: z.union([z.string(), z.array(z.string())]).optional().describe('BCC recipient(s)'),
         isHtml: z.boolean().optional().describe('Whether body is HTML (default: false, plain text)'),
+        replyToMessageId: z.string().optional().describe('Message ID to reply to. When provided, the draft will be threaded as a reply with proper In-Reply-To and References headers.'),
         email: emailSchema,
       },
     },
@@ -753,6 +754,7 @@ export async function createMcpServer(deps: McpServerDependencies): Promise<McpS
           cc: args.cc,
           bcc: args.bcc,
           isHtml: args.isHtml,
+          replyToMessageId: args.replyToMessageId,
         }, args.email);
         return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
       } catch (error) {
@@ -819,6 +821,7 @@ export async function createMcpServer(deps: McpServerDependencies): Promise<McpS
         cc: z.union([z.string(), z.array(z.string())]).optional().describe('CC recipient(s)'),
         bcc: z.union([z.string(), z.array(z.string())]).optional().describe('BCC recipient(s)'),
         isHtml: z.boolean().optional().describe('Whether body is HTML (default: false, plain text)'),
+        replyToMessageId: z.string().optional().describe('Message ID to reply to. When provided, the draft will be threaded as a reply with proper In-Reply-To and References headers.'),
         email: emailSchema,
       },
     },
@@ -830,6 +833,7 @@ export async function createMcpServer(deps: McpServerDependencies): Promise<McpS
           cc: args.cc,
           bcc: args.bcc,
           isHtml: args.isHtml,
+          replyToMessageId: args.replyToMessageId,
         }, args.email);
         return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
       } catch (error) {

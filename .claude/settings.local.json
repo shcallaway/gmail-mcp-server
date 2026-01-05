@@ -19,7 +19,10 @@
       "Bash(npm run bin:claude-code-setup:*)",
       "Bash(npm run bin:cc-install-subagents:*)",
       "Bash(npm run bin:cc-install-mcp-server:*)",
-      "mcp__gmail-mcp__gmail_archiveMessages"
+      "mcp__gmail-mcp__gmail_archiveMessages",
+      "Bash(npm run test)",
+      "mcp__gmail-mcp__gmail_deleteDraft",
+      "mcp__gmail-mcp__gmail_createDraft"
     ]
   },
   "enableAllProjectMcpServers": true,

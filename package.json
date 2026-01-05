@@ -23,6 +23,7 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "docker:restart": "docker compose restart",
+    "bin:build": "./bin/build.sh",
     "bin:start": "./bin/start.sh",
     "bin:stop": "./bin/stop.sh",
     "bin:generate-secrets": "./bin/generate-secrets.sh",

@@ -144,3 +144,15 @@ Gmail's INBOX label count includes ALL emails with that label, but Superhuman on
 When using `gmail.searchMessages` with `in:inbox`, results include ALL inbox emails regardless of Superhuman's AI categorization. To match Superhuman's main inbox view, filter by Superhuman labels:
 - `in:inbox label:[Superhuman]/AI/Respond` - emails needing response
 - `in:inbox -label:[Superhuman]/AI/Marketing -label:[Superhuman]/AI/Newsletter` - exclude "Other" feed items
+
+**Draft Threading Limitation:**
+
+Drafts created via the Gmail API (using `gmail.createDraft` with `replyToMessageId`) are properly threaded in Gmail but **do not appear inline in Superhuman threads**. This is a Superhuman UI limitation:
+
+- **Gmail behavior**: API-created drafts with correct `In-Reply-To`, `References` headers, and `threadId` appear inline in the thread view
+- **Superhuman behavior**: These drafts only appear in the Drafts folder (Cmd+9), not inline in the thread. Superhuman only shows drafts inline when created through its own Reply flow.
+
+**Workarounds for Superhuman users:**
+1. Send the draft from Gmail web - it will thread correctly when sent
+2. Open the draft from Superhuman's Drafts folder and send from there
+3. Copy the draft text and use Superhuman's native Reply to compose inline
