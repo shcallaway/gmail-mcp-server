@@ -1,6 +1,15 @@
 # Gmail MCP Server
 
-An MCP (Model Context Protocol) server that exposes Gmail tools via Streamable HTTP transport. Enables AI assistants to read, search, organize, and draft emails in your Gmail inbox.
+An MCP (Model Context Protocol) server that exposes Gmail tools via Streamable HTTP transport. Enables AI assistants to read, search, organize, and draft emails.
+
+## Features
+
+- **26 Gmail tools** for reading, searching, labeling, archiving, and drafting emails
+- **Multi-inbox support** - connect multiple Gmail accounts per user
+- **Two-layer OAuth** - MCP-level JWT authentication + Google OAuth for Gmail
+- **Secure storage** - refresh tokens encrypted with AES-256-GCM
+- **Automatic token refresh** - proactive refresh 5 minutes before expiry
+- **Thread-aware operations** - archive entire conversations by default
 
 ## Quickstart
 
@@ -10,22 +19,13 @@ cd gmail-mcp-server
 
 # Generate secrets and create .env
 npm run bin:generate-secrets
-# Edit .env to add your Google OAuth credentials
+# Add your Google OAuth credentials to .env
 
-# Start the server
+# Start with Docker
 npm run docker:up
 ```
 
-Server runs at `http://localhost:3000`. Connect your Gmail at `/oauth/start`.
-
-## Features
-
-- **26 Gmail tools** for comprehensive inbox management
-- **Multi-inbox support**: Connect multiple Gmail accounts per user
-- **Two-layer OAuth**: MCP-level JWT authentication + Google OAuth for Gmail access
-- **Secure token storage**: SQLite with AES-256-GCM encryption for refresh tokens
-- **Streamable HTTP transport**: Stateless mode for easy deployment
-- **Automatic token refresh**: Proactive refresh 5 minutes before expiry
+Server runs at `http://localhost:3000`. See [Google Cloud Setup](#google-cloud-setup) for OAuth credentials.
 
 ## Requirements
 
@@ -35,51 +35,37 @@ Server runs at `http://localhost:3000`. Connect your Gmail at `/oauth/start`.
 
 ## Google Cloud Setup
 
-1. **Create a project** at [console.cloud.google.com](https://console.cloud.google.com)
+1. Create a project at [console.cloud.google.com](https://console.cloud.google.com)
 
-2. **Enable the Gmail API**
-   - Go to APIs & Services → Library
-   - Search for "Gmail API" and enable it
+2. Enable the Gmail API: APIs & Services > Library > search "Gmail API" > Enable
 
-3. **Configure OAuth consent screen**
-   - Go to APIs & Services → OAuth consent screen
+3. Configure OAuth consent screen:
+   - APIs & Services > OAuth consent screen
    - Choose "External" user type
-   - Fill in app name and support email
    - Add scopes: `gmail.readonly`, `gmail.labels`, `gmail.modify`, `gmail.compose`
-   - Add your email as a test user
+   - Add test users
 
-4. **Create OAuth credentials**
-   - Go to APIs & Services → Credentials
-   - Click "Create Credentials" → "OAuth client ID"
-   - Choose "Web application"
-   - Add authorized redirect URI: `http://localhost:3000/oauth/callback`
-   - Copy the Client ID and Client Secret
+4. Create OAuth credentials:
+   - APIs & Services > Credentials > Create Credentials > OAuth client ID
+   - Application type: Web application
+   - Authorized redirect URI: `http://localhost:3000/oauth/callback`
 
-5. **Add to .env**
+5. Add to `.env`:
    ```
    GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
    GOOGLE_CLIENT_SECRET=your-client-secret
    OAUTH_REDIRECT_URI=http://localhost:3000/oauth/callback
    ```
 
-## Installation
-
-```bash
-git clone <repository-url>
-cd gmail-mcp
-npm install
-npm run build
-```
-
 ## Configuration
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-### Required Environment Variables
+### Required Variables
 
 | Variable | Description |
 |----------|-------------|
@@ -87,8 +73,8 @@ cp .env.example .env
 | `BASE_URL` | Public URL of the server |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `OAUTH_REDIRECT_URI` | OAuth callback URL (e.g., `http://localhost:3000/oauth/callback`) |
-| `TOKEN_ENCRYPTION_KEY` | 32-byte key for encrypting stored tokens |
+| `OAUTH_REDIRECT_URI` | OAuth callback URL |
+| `TOKEN_ENCRYPTION_KEY` | 32+ character key for encrypting stored tokens |
 | `JWT_SECRET` | Secret for signing MCP-level JWTs |
 
 ### Optional Variables
@@ -101,96 +87,104 @@ cp .env.example .env
 ### Generating Secrets
 
 ```bash
-# Generate and optionally save to .env
-./bin/generate-secrets.sh
-
-# Or use npm
 npm run bin:generate-secrets
 ```
 
 ## Running the Server
 
+### Development
+
 ```bash
-# Production
+npm install
+npm run dev
+```
+
+### Production
+
+```bash
 npm run build
 npm start
-
-# Development (with hot reload)
-npm run dev
 ```
 
 ### Docker
 
-The easiest way to deploy anywhere:
-
 ```bash
-npm run docker:up       # Start the server
-npm run docker:down     # Stop the server
+npm run docker:up       # Start container
+npm run docker:down     # Stop container
 npm run docker:logs     # Tail logs
 npm run docker:restart  # Restart container
 npm run docker:build    # Rebuild image
 ```
 
-The SQLite database persists in `./data/` via volume mount.
+Data persists in `./data/` via volume mount.
 
-The server exposes:
-- `POST /mcp` - MCP protocol endpoint
-- `GET /healthz` - Health check
-- `GET /oauth/start` - Initiate Gmail OAuth flow
-- `GET /oauth/callback` - OAuth callback handler
-- `GET /.well-known/oauth-protected-resource` - OAuth discovery
+### Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/mcp` | MCP protocol endpoint |
+| GET | `/healthz` | Health check |
+| GET | `/oauth/start` | Initiate Gmail OAuth |
+| GET | `/oauth/callback` | OAuth callback |
 
 ## Available Tools
 
-All tools accept an optional `email` parameter to target a specific connected account. If omitted, the default account is used.
+All tools accept an optional `email` parameter to target a specific connected account.
 
 ### Authentication & Accounts
+
 | Tool | Description |
 |------|-------------|
-| `gmail.status` | Check connection status and list connected accounts |
+| `gmail.status` | Check connection status and list accounts |
 | `gmail.authorize` | Initiate OAuth flow to connect Gmail |
-| `gmail.listAccounts` | List all connected Gmail accounts |
-| `gmail.setDefaultAccount` | Set which account is used by default |
-| `gmail.removeAccount` | Disconnect a Gmail account |
+| `gmail.listAccounts` | List all connected accounts |
+| `gmail.setDefaultAccount` | Set default account |
+| `gmail.removeAccount` | Disconnect an account |
 
 ### Reading Messages
+
 | Tool | Description |
 |------|-------------|
 | `gmail.searchMessages` | Search using Gmail query syntax |
-| `gmail.getMessage` | Get a single message by ID |
+| `gmail.getMessage` | Get a message by ID |
 | `gmail.listThreads` | List conversation threads |
 | `gmail.getThread` | Get all messages in a thread |
-| `gmail.getAttachmentMetadata` | Get attachment info (filename, size, MIME type) |
+| `gmail.getAttachmentMetadata` | Get attachment info |
 
 ### Labels
-| Tool | Description | Scope Required |
-|------|-------------|----------------|
-| `gmail.listLabels` | List all labels with counts | - |
-| `gmail.getLabelInfo` | Get label details | - |
-| `gmail.addLabels` | Add labels to messages/threads | `gmail.labels` |
-| `gmail.removeLabels` | Remove labels from messages/threads | `gmail.labels` |
-| `gmail.createLabel` | Create a custom label | `gmail.labels` |
+
+| Tool | Description | Scope |
+|------|-------------|-------|
+| `gmail.listLabels` | List all labels | readonly |
+| `gmail.getLabelInfo` | Get label details | readonly |
+| `gmail.addLabels` | Add labels to messages/threads | labels |
+| `gmail.removeLabels` | Remove labels | labels |
+| `gmail.createLabel` | Create custom label | labels |
 
 ### Message Organization
-| Tool | Description | Scope Required |
-|------|-------------|----------------|
-| `gmail.archiveMessages` | Archive messages/threads (thread-aware by default) | `gmail.modify` |
-| `gmail.unarchiveMessages` | Move back to inbox (thread-aware by default) | `gmail.modify` |
-| `gmail.markAsRead` | Mark as read | `gmail.labels` |
-| `gmail.markAsUnread` | Mark as unread | `gmail.labels` |
-| `gmail.starMessages` | Add star | `gmail.labels` |
-| `gmail.unstarMessages` | Remove star | `gmail.labels` |
 
-> **Thread-Aware Archiving**: By default, `archiveMessages` and `unarchiveMessages` will archive the entire thread when given a `messageId`. This ensures conversations leave your inbox. Set `archiveEntireThread: false` to archive individual messages only.
+| Tool | Description | Scope |
+|------|-------------|-------|
+| `gmail.archiveMessages` | Archive messages/threads | modify |
+| `gmail.unarchiveMessages` | Move back to inbox | modify |
+| `gmail.markAsRead` | Mark as read | labels |
+| `gmail.markAsUnread` | Mark as unread | labels |
+| `gmail.starMessages` | Add star | labels |
+| `gmail.unstarMessages` | Remove star | labels |
+
+**Note:** Archive operations are thread-aware by default. Set `archiveEntireThread: false` to archive individual messages only.
 
 ### Drafts
-| Tool | Description | Scope Required |
-|------|-------------|----------------|
-| `gmail.createDraft` | Create a new draft | `gmail.compose` |
-| `gmail.listDrafts` | List all drafts | - |
-| `gmail.getDraft` | Get draft content | - |
-| `gmail.updateDraft` | Update existing draft | `gmail.compose` |
-| `gmail.deleteDraft` | Delete a draft | `gmail.compose` |
+
+| Tool | Description | Scope |
+|------|-------------|-------|
+| `gmail.createDraft` | Create a draft | compose |
+| `gmail.listDrafts` | List drafts | readonly |
+| `gmail.getDraft` | Get draft content | readonly |
+| `gmail.updateDraft` | Update a draft | compose |
+| `gmail.deleteDraft` | Delete a draft | compose |
+
+Draft tools support `replyToMessageId` for proper email threading.
 
 ## OAuth Scopes
 
@@ -200,160 +194,88 @@ Request scopes when calling `gmail.authorize`:
 |-------|-------------|
 | `gmail.readonly` | Read messages, threads, labels |
 | `gmail.labels` | Manage labels, star, mark read/unread |
-| `gmail.modify` | Archive/unarchive messages and threads |
-| `gmail.compose` | Create, update, and delete drafts |
+| `gmail.modify` | Archive/unarchive messages |
+| `gmail.compose` | Create, update, delete drafts |
 
-Example:
 ```json
-{
-  "scopes": ["gmail.readonly", "gmail.modify", "gmail.compose"]
-}
+{ "scopes": ["gmail.readonly", "gmail.modify", "gmail.compose"] }
 ```
 
 ## Multi-Inbox Support
 
-Users can connect multiple Gmail accounts. The first connected account becomes the default.
+Connect multiple Gmail accounts per user. The first account becomes the default.
 
-### Connecting Additional Accounts
-
-Call `gmail.authorize` again to connect another Gmail account. Each account can have different scopes.
-
-### Targeting Specific Accounts
+### Targeting Accounts
 
 All tools accept an optional `email` parameter:
 
 ```json
-{
-  "query": "is:unread",
-  "email": "work@example.com"
-}
+{ "query": "is:unread", "email": "work@example.com" }
 ```
-
-If `email` is omitted, the default account is used.
 
 ### Managing Accounts
 
 ```json
-// List all connected accounts
+// List accounts
 { "tool": "gmail.listAccounts" }
 
-// Change default account
+// Change default
 { "tool": "gmail.setDefaultAccount", "email": "work@example.com" }
 
-// Disconnect an account
+// Disconnect
 { "tool": "gmail.removeAccount", "email": "old@example.com" }
 ```
 
 ## Architecture
 
 ```
-MCP Client → Fastify HTTP (/mcp) → MCP Server → Gmail Client → Google APIs
-                    ↓
-            Token Store (SQLite) ← encrypted credentials
+MCP Client -> Fastify HTTP (/mcp) -> MCP Server -> Gmail Client -> Google APIs
+                    |
+            Token Store (SQLite) <- encrypted credentials
 ```
 
 ### Key Components
 
-- **`src/index.ts`** - Entry point
-- **`src/config.ts`** - Zod-validated configuration
-- **`src/http/server.ts`** - Fastify HTTP server
-- **`src/mcp/server.ts`** - MCP server with all tools
-- **`src/gmail/client.ts`** - Gmail API wrapper with token refresh
-- **`src/auth/mcpOAuth.ts`** - MCP-level JWT authentication
-- **`src/auth/googleOAuth.ts`** - Google OAuth flow with PKCE
-- **`src/store/sqlite.ts`** - SQLite token storage with encryption (composite key for multi-account)
+| Module | Purpose |
+|--------|---------|
+| `src/index.ts` | Entry point |
+| `src/config.ts` | Zod-validated configuration |
+| `src/http/server.ts` | Fastify HTTP server |
+| `src/mcp/server.ts` | MCP server with 26 tools |
+| `src/gmail/client.ts` | Gmail API wrapper with token refresh |
+| `src/auth/mcpOAuth.ts` | MCP-level JWT authentication |
+| `src/auth/googleOAuth.ts` | Google OAuth with PKCE |
+| `src/store/sqlite.ts` | SQLite token storage with encryption |
 
 ## Development
 
 ```bash
-# Run tests
-npm test
+npm test              # Run tests
+npm run test:coverage # Tests with coverage
+npm run typecheck     # Type checking
+npm run lint          # ESLint
 
-# Run tests with coverage
-npm run test:coverage
-
-# Type checking
-npm run typecheck
-
-# Linting
-npm run lint
-
-# Run single test file
+# Single test file
 npx vitest run tests/unit/crypto.test.ts
 ```
 
 ## Claude Code Integration
 
-### Install MCP Server
-
-Add the Gmail MCP server to your Claude Code configuration:
-
-```bash
-npm run bin:cc-install-mcp-server
-```
-
-This adds the server to `~/.claude.json`. Make sure the server is running first.
-
-### Install Subagents
-
-Install custom Claude Code subagents for enhanced Gmail workflows:
-
-```bash
-npm run bin:cc-install-subagents
-```
-
-This installs **12 specialized Gmail agents** that provide intelligent email management capabilities.
-
-### Available Subagents
-
-| Agent | Description | Example Prompt |
-|-------|-------------|----------------|
-| **gmail-inbox-explorer** | Analyzes inbox structure, labels, and activity | "Explore my Gmail inbox" |
-| **gmail-email-triage** | Prioritizes unread emails by urgency | "Help me triage my inbox" |
-| **gmail-email-summarizer** | Summarizes emails matching search criteria | "Summarize emails from John this week" |
-| **gmail-draft-composer** | Helps write professional email drafts | "Help me write an email to my boss" |
-| **gmail-inbox-cleanup** | Archives old emails and reduces clutter | "Clean up my inbox" |
-| **gmail-follow-up-finder** | Finds emails needing response or follow-up | "What emails need follow-up?" |
-| **gmail-action-item-extractor** | Extracts tasks and deadlines from emails | "What action items are in my emails?" |
-| **gmail-project-email-collector** | Gathers all emails about a project/topic | "Find all emails about the redesign project" |
-| **gmail-newsletter-manager** | Manages newsletter subscriptions | "What newsletters am I subscribed to?" |
-| **gmail-contact-insights** | Analyzes communication with a contact | "Show my email history with sarah@company.com" |
-| **gmail-multi-inbox-dashboard** | Unified view across multiple accounts | "Overview of all my email accounts" |
-| **gmail-email-reply-drafter** | Drafts contextual replies to threads | "Help me reply to the project deadline email" |
-
-### Example Usage
-
-Ask Claude Code naturally and it will automatically use the appropriate agent:
-
-```
-"I have 50 unread emails, what needs my attention first?"
-→ Uses gmail-email-triage
-
-"Summarize the email thread about Q4 planning"
-→ Uses gmail-email-summarizer
-
-"Help me write a follow-up email to the client"
-→ Uses gmail-draft-composer
-
-"What tasks are buried in my recent emails?"
-→ Uses gmail-action-item-extractor
-```
+This server includes Claude Code skills in `.claude/skills/` for enhanced Gmail workflows. Run `npm run bin:cc-install-mcp-server` to add the server to your Claude Code configuration.
 
 ## Error Handling
 
-The server uses JSON-RPC error codes:
-
 | Code | Type | Description |
 |------|------|-------------|
-| `-32001` | `NOT_AUTHORIZED` | User not authenticated, token revoked, or insufficient scope |
-| `-32602` | `INVALID_ARGUMENT` | Invalid input parameters or account not found |
-| `-32000` | `GMAIL_API_ERROR` | Gmail API error or rate limit |
+| `-32001` | NOT_AUTHORIZED | Not authenticated or insufficient scope |
+| `-32602` | INVALID_ARGUMENT | Invalid parameters or account not found |
+| `-32000` | GMAIL_API_ERROR | Gmail API error or rate limit |
 
-When `invalid_grant` is returned from Google (token revoked), stored tokens are cleared and the user must re-authorize.
+When Google returns `invalid_grant` (token revoked), stored tokens are cleared and re-authorization is required.
 
 ## Security
 
-- Refresh tokens encrypted with AES-256-GCM before storage
+- Refresh tokens encrypted with AES-256-GCM
 - MCP-level JWTs (HS256) with 1-hour lifetime
 - Google OAuth with PKCE support
 - CSRF protection via state parameter
