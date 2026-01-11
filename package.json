@@ -22,7 +22,8 @@
 		"docker:restart": "docker compose restart",
 		"bin:generate-secrets": "./bin/generate-secrets.sh",
 		"bin:cc-install-mcp-server": "./bin/cc-install-mcp-server.sh",
-		"bin:cc-install-subagents": "./bin/cc-install-subagents.sh"
+		"bin:cc-install-subagents": "./bin/cc-install-subagents.sh",
+		"bin:cc-install-skills": "./bin/cc-install-skills.sh"
 	},
 	"keywords": [
 		"mcp",
