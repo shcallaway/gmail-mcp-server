@@ -10,10 +10,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Paths
 const CLAUDE_CONFIG = path.join(os.homedir(), '.claude.json');
 const CLAUDE_SKILLS_DIR = path.join(os.homedir(), '.claude', 'skills');
+const CLAUDE_AGENTS_DIR = path.join(os.homedir(), '.claude', 'agents');
 const LOCAL_SKILLS_DIR = path.join(__dirname, '..', '.claude', 'skills');
+const LOCAL_AGENTS_DIR = path.join(__dirname, '..', '.claude', 'agents');
 const MCP_SERVER_URL = 'http://localhost:3000/mcp';
 const MCP_SERVER_NAME = 'gmail-mcp';
 const SKILL_PREFIX = 'gmail-';
+const AGENT_PREFIX = 'gmail-';
 
 // Colors for terminal output
 const colors = {
@@ -183,6 +186,72 @@ function uninstallSkills() {
   return removedCount;
 }
 
+// Get list of agent files from local directory (returns agent names without .md)
+function getLocalAgents() {
+  if (!fs.existsSync(LOCAL_AGENTS_DIR)) {
+    return [];
+  }
+  return fs.readdirSync(LOCAL_AGENTS_DIR)
+    .filter(f => f.endsWith('.md') && f.startsWith(AGENT_PREFIX))
+    .map(f => f.replace('.md', ''));
+}
+
+// Get list of installed gmail agents
+function getInstalledAgents() {
+  if (!fs.existsSync(CLAUDE_AGENTS_DIR)) {
+    return [];
+  }
+  return fs.readdirSync(CLAUDE_AGENTS_DIR)
+    .filter(f => f.endsWith('.md') && f.startsWith(AGENT_PREFIX))
+    .map(f => f.replace('.md', ''));
+}
+
+// Install agents by copying files
+function installAgents() {
+  const agents = getLocalAgents();
+
+  if (agents.length === 0) {
+    info(`No agents found in ${LOCAL_AGENTS_DIR}`);
+    return 0;
+  }
+
+  // Create agents directory if needed
+  if (!fs.existsSync(CLAUDE_AGENTS_DIR)) {
+    fs.mkdirSync(CLAUDE_AGENTS_DIR, { recursive: true });
+  }
+
+  let installed = 0;
+  for (const agentName of agents) {
+    const src = path.join(LOCAL_AGENTS_DIR, `${agentName}.md`);
+    const dest = path.join(CLAUDE_AGENTS_DIR, `${agentName}.md`);
+    fs.copyFileSync(src, dest);
+    success(agentName);
+    installed++;
+  }
+
+  return installed;
+}
+
+// Uninstall agents by removing files
+function uninstallAgents() {
+  const agents = getInstalledAgents();
+
+  if (agents.length === 0) {
+    info('No Gmail agents found in ~/.claude/agents/');
+    return 0;
+  }
+
+  let removedCount = 0;
+  for (const agentName of agents) {
+    const agentFile = path.join(CLAUDE_AGENTS_DIR, `${agentName}.md`);
+    fs.unlinkSync(agentFile);
+    removed(agentName);
+    removedCount++;
+  }
+
+  return removedCount;
+}
+
 // Show installation status
 function showStatus() {
   log('\nGmail MCP - Installation Status\n');
@@ -196,12 +265,24 @@ function showStatus() {
     info('Not installed');
   }
 
+  // Agents status
+  header('Subagents');
+  const installedAgents = getInstalledAgents();
+  if (installedAgents.length > 0) {
+    success(`${installedAgents.length} subagent(s) installed (auto-triggered):`);
+    for (const agentName of installedAgents) {
+      info(agentName);
+    }
+  } else {
+    info('No subagents installed');
+  }
+
   // Skills status
   header('Skills');
-  const installed = getInstalledSkills();
-  if (installed.length > 0) {
-    success(`${installed.length} skill(s) installed:`);
-    for (const skillName of installed) {
+  const installedSkills = getInstalledSkills();
+  if (installedSkills.length > 0) {
+    success(`${installedSkills.length} skill(s) installed (explicit /command):`);
+    for (const skillName of installedSkills) {
       info(`/${skillName}`);
     }
   } else {
@@ -218,11 +299,15 @@ function setup() {
   header('MCP Server');
   installMcpServer();
 
-  header('Skills');
-  const count = installSkills();
+  header('Subagents');
+  const agentCount = installAgents();
 
-  log(`\n${colors.green}Done!${colors.reset} ${count} skill(s) installed.`);
-  log(`\nRun ${colors.cyan}/gmail-inbox${colors.reset} to get started.\n`);
+  header('Skills');
+  const skillCount = installSkills();
+
+  log(`\n${colors.green}Done!${colors.reset} ${agentCount} subagent(s) + ${skillCount} skill(s) installed.`);
+  log(`\nSubagents auto-trigger on context (e.g., "prioritize my inbox")`);
+  log(`Skills run explicitly (e.g., ${colors.cyan}/gmail-inbox${colors.reset})\n`);
 }
 
 // Main uninstall command
@@ -232,10 +317,13 @@ function uninstall() {
   header('MCP Server');
   uninstallMcpServer();
 
-  header('Skills');
-  const count = uninstallSkills();
+  header('Subagents');
+  const agentCount = uninstallAgents();
 
-  log(`\n${colors.green}Done!${colors.reset} Removed MCP server and ${count} skill(s).\n`);
+  header('Skills');
+  const skillCount = uninstallSkills();
+
+  log(`\n${colors.green}Done!${colors.reset} Removed MCP server, ${agentCount} subagent(s), and ${skillCount} skill(s).\n`);
 }
 
 // Parse command and run
