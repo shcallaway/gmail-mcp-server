@@ -1,9 +1,9 @@
 ---
-name: inbox
+name: gmail-inbox
 description: Quick snapshot of inbox state - unread count, recent messages, starred items
 ---
 
-# /inbox - Quick Inbox Status
+# /gmail-inbox - Quick Inbox Status
 
 Provide a quick snapshot of the user's inbox state without deep analysis.
 
@@ -35,4 +35,4 @@ Recent messages:
 - Keep output concise - this is a quick status check
 - Show relative time (e.g., "2 hours ago", "yesterday")
 - Truncate long subjects if needed
-- If not authenticated, explain how to connect with /connect
+- If not authenticated, explain how to connect with /gmail-connect

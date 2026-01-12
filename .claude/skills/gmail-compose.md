@@ -1,18 +1,18 @@
 ---
-name: compose
+name: gmail-compose
 description: Draft a new email or reply with context-aware suggestions
 ---
 
-# /compose - Compose Email
+# /gmail-compose - Compose Email
 
 Help draft a new email or reply to an existing thread.
 
 ## Usage
 
 ```
-/compose                          # Start a new email
-/compose reply to {description}   # Reply to a specific email
-/compose follow up with {person}  # Follow up on recent conversation
+/gmail-compose                          # Start a new email
+/gmail-compose reply to {description}   # Reply to a specific email
+/gmail-compose follow up with {person}  # Follow up on recent conversation
 ```
 
 ## Steps for New Email

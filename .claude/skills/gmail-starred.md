@@ -1,9 +1,9 @@
 ---
-name: starred
+name: gmail-starred
 description: Show all starred messages
 ---
 
-# /starred - View Starred Messages
+# /gmail-starred - View Starred Messages
 
 Show all starred messages (typically important items marked for follow-up).
 

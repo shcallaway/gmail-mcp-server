@@ -1,16 +1,16 @@
 ---
-name: search
+name: gmail-search
 description: Search Gmail using native query syntax
 ---
 
-# /search - Gmail Search
+# /gmail-search - Gmail Search
 
 Run a Gmail search using native query syntax.
 
 ## Usage
 
 ```
-/search <query>
+/gmail-search <query>
 ```
 
 ## Steps

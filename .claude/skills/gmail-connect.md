@@ -1,9 +1,9 @@
 ---
-name: connect
+name: gmail-connect
 description: Connect a new Gmail account via OAuth
 ---
 
-# /connect - Connect Gmail Account
+# /gmail-connect - Connect Gmail Account
 
 Start the OAuth flow to connect a new Gmail account.
 
@@ -38,7 +38,7 @@ Please visit the authorization URL to connect your account...
 
 This account is now {set as default / available for use}.
 
-Use /accounts to see all connected accounts.
+Use /gmail-accounts to see all connected accounts.
 ```
 
 ## Notes

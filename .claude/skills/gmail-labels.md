@@ -1,9 +1,9 @@
 ---
-name: labels
+name: gmail-labels
 description: List all Gmail labels with message counts
 ---
 
-# /labels - View Labels
+# /gmail-labels - View Labels
 
 List all Gmail labels with their message counts.
 

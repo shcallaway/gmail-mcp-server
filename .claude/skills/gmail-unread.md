@@ -1,9 +1,9 @@
 ---
-name: unread
+name: gmail-unread
 description: List all unread messages in inbox for quick scanning
 ---
 
-# /unread - List Unread Messages
+# /gmail-unread - List Unread Messages
 
 List all unread inbox messages for quick scanning.
 

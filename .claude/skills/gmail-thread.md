@@ -1,16 +1,16 @@
 ---
-name: thread
+name: gmail-thread
 description: View a specific email conversation thread
 ---
 
-# /thread - View Conversation Thread
+# /gmail-thread - View Conversation Thread
 
 Pull up a specific email conversation thread.
 
 ## Usage
 
 ```
-/thread <subject or search query>
+/gmail-thread <subject or search query>
 ```
 
 ## Steps

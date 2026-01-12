@@ -20,10 +20,10 @@
 		"docker:down": "docker compose down",
 		"docker:logs": "docker compose logs -f",
 		"docker:restart": "docker compose restart",
-		"bin:generate-secrets": "./bin/generate-secrets.sh",
-		"bin:cc-install-mcp-server": "./bin/cc-install-mcp-server.sh",
-		"bin:cc-install-subagents": "./bin/cc-install-subagents.sh",
-		"bin:cc-install-skills": "./bin/cc-install-skills.sh"
+		"setup:secrets": "node bin/generate-secrets.js",
+		"claude:setup": "node bin/claude-setup.js",
+		"claude:uninstall": "node bin/claude-setup.js uninstall",
+		"claude:status": "node bin/claude-setup.js status"
 	},
 	"keywords": [
 		"mcp",

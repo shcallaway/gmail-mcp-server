@@ -1,9 +1,9 @@
 ---
-name: explore
+name: gmail-explore
 description: Comprehensive overview of inbox - volume, top senders, labels, activity patterns
 ---
 
-# /explore - Inbox Overview
+# /gmail-explore - Inbox Overview
 
 Provide a comprehensive profile of the inbox for orientation or periodic review.
 
@@ -67,7 +67,7 @@ Custom:
 
 ## Notes
 
-- This is more comprehensive than /inbox - use for orientation, not daily checks
+- This is more comprehensive than /gmail-inbox - use for orientation, not daily checks
 - Calculate top senders by counting frequency in search results
 - Only show custom labels that have messages
 - Provide a brief health assessment based on:

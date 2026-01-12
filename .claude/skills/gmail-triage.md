@@ -1,9 +1,9 @@
 ---
-name: triage
+name: gmail-triage
 description: Prioritize inbox - identify urgent emails, action items, and what needs response
 ---
 
-# /triage - Inbox Triage
+# /gmail-triage - Inbox Triage
 
 Analyze unread emails and prioritize them by urgency and action required.
 

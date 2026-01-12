@@ -1,18 +1,18 @@
 ---
-name: summarize
+name: gmail-summarize
 description: Summarize an email thread or set of emails on a topic
 ---
 
-# /summarize - Summarize Emails
+# /gmail-summarize - Summarize Emails
 
 Generate a concise summary of an email thread or collection of emails.
 
 ## Usage
 
 ```
-/summarize {thread subject or description}
-/summarize emails from {person}
-/summarize emails about {topic}
+/gmail-summarize {thread subject or description}
+/gmail-summarize emails from {person}
+/gmail-summarize emails about {topic}
 ```
 
 ## Steps for Thread Summary

@@ -1,9 +1,9 @@
 ---
-name: accounts
+name: gmail-accounts
 description: View connected Gmail accounts and current default
 ---
 
-# /accounts - View Connected Accounts
+# /gmail-accounts - View Connected Accounts
 
 Show all connected Gmail accounts and which is set as default.
 
@@ -21,7 +21,7 @@ Show all connected Gmail accounts and which is set as default.
 • {email}
 • {email}
 
-Use /connect to add another account
+Use /gmail-connect to add another account
 Use gmail_setDefaultAccount to change default
 ```
 
@@ -29,7 +29,7 @@ Use gmail_setDefaultAccount to change default
 ```
 📧 No Gmail accounts connected
 
-Use /connect to authorize a Gmail account
+Use /gmail-connect to authorize a Gmail account
 ```
 
 ## Notes

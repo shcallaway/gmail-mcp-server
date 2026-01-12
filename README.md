@@ -33,7 +33,7 @@ npm install
 
 ```bash
 # Generate secure secrets
-npm run bin:generate-secrets
+npm run setup:secrets
 
 # Edit .env with your Google OAuth credentials
 # Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
@@ -51,7 +51,49 @@ The server runs on `http://localhost:3000`.
 ### 5. Connect to Claude Code
 
 ```bash
-npm run bin:cc-install-mcp-server
+npm run claude:setup
+```
+
+This installs the MCP server connection and Gmail skills.
+
+## Claude Code Integration
+
+### Setup
+
+After the server is running, install the Claude Code integration:
+
+```bash
+npm run claude:setup
+```
+
+This installs:
+- MCP server connection to `~/.claude.json`
+- Gmail skills to `~/.claude/skills/`
+
+### Available Skills
+
+| Command | Description |
+|---------|-------------|
+| `/gmail-inbox` | Quick inbox status |
+| `/gmail-unread` | List unread messages |
+| `/gmail-triage` | Prioritize unread emails |
+| `/gmail-explore` | Comprehensive inbox overview |
+| `/gmail-search` | Search with Gmail query syntax |
+| `/gmail-thread` | View a conversation thread |
+| `/gmail-compose` | Draft new emails |
+| `/gmail-summarize` | Summarize email threads |
+| `/gmail-cleanup` | Archive and organize inbox |
+| `/gmail-labels` | View all labels |
+| `/gmail-starred` | View starred messages |
+| `/gmail-drafts` | View pending drafts |
+| `/gmail-connect` | Connect Gmail account |
+| `/gmail-accounts` | View connected accounts |
+
+### Management
+
+```bash
+npm run claude:status     # Check what's installed
+npm run claude:uninstall  # Remove integration
 ```
 
 ## Configuration

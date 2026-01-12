@@ -1,9 +1,9 @@
 ---
-name: cleanup
+name: gmail-cleanup
 description: Identify emails to archive - old messages, newsletters, bulk cleanup candidates
 ---
 
-# /cleanup - Inbox Cleanup
+# /gmail-cleanup - Inbox Cleanup
 
 Identify emails that can be archived to reduce inbox clutter.
 

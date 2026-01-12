@@ -1,9 +1,9 @@
 ---
-name: drafts
+name: gmail-drafts
 description: List all pending email drafts
 ---
 
-# /drafts - View Drafts
+# /gmail-drafts - View Drafts
 
 List all saved email drafts.
 
