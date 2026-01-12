@@ -105,25 +105,32 @@ function uninstallMcpServer() {
   return false;
 }
 
-// Get list of skill files from local directory
+// Get list of skill files from local directory (returns skill names without .md)
 function getLocalSkills() {
   if (!fs.existsSync(LOCAL_SKILLS_DIR)) {
     return [];
   }
   return fs.readdirSync(LOCAL_SKILLS_DIR)
-    .filter(f => f.endsWith('.md') && f.startsWith(SKILL_PREFIX));
+    .filter(f => f.endsWith('.md') && f.startsWith(SKILL_PREFIX))
+    .map(f => f.replace('.md', ''));
 }
 
-// Get list of installed gmail skills
+// Get list of installed gmail skill directories
 function getInstalledSkills() {
   if (!fs.existsSync(CLAUDE_SKILLS_DIR)) {
     return [];
   }
   return fs.readdirSync(CLAUDE_SKILLS_DIR)
-    .filter(f => f.endsWith('.md') && f.startsWith(SKILL_PREFIX));
+    .filter(f => {
+      const skillPath = path.join(CLAUDE_SKILLS_DIR, f);
+      const skillFile = path.join(skillPath, 'SKILL.md');
+      return f.startsWith(SKILL_PREFIX) &&
+             fs.statSync(skillPath).isDirectory() &&
+             fs.existsSync(skillFile);
+    });
 }
 
-// Install skills by copying files
+// Install skills by creating subdirectories with SKILL.md
 function installSkills() {
   const skills = getLocalSkills();
 
@@ -138,18 +145,25 @@ function installSkills() {
   }
 
   let installed = 0;
-  for (const skill of skills) {
-    const src = path.join(LOCAL_SKILLS_DIR, skill);
-    const dest = path.join(CLAUDE_SKILLS_DIR, skill);
+  for (const skillName of skills) {
+    const src = path.join(LOCAL_SKILLS_DIR, `${skillName}.md`);
+    const skillDir = path.join(CLAUDE_SKILLS_DIR, skillName);
+    const dest = path.join(skillDir, 'SKILL.md');
+
+    // Create skill subdirectory
+    if (!fs.existsSync(skillDir)) {
+      fs.mkdirSync(skillDir, { recursive: true });
+    }
+
     fs.copyFileSync(src, dest);
-    success(skill);
+    success(skillName);
     installed++;
   }
 
   return installed;
 }
 
-// Uninstall skills by removing files
+// Uninstall skills by removing directories
 function uninstallSkills() {
   const skills = getInstalledSkills();
 
@@ -159,10 +173,10 @@ function uninstallSkills() {
   }
 
   let removedCount = 0;
-  for (const skill of skills) {
-    const filepath = path.join(CLAUDE_SKILLS_DIR, skill);
-    fs.unlinkSync(filepath);
-    removed(skill);
+  for (const skillName of skills) {
+    const skillDir = path.join(CLAUDE_SKILLS_DIR, skillName);
+    fs.rmSync(skillDir, { recursive: true, force: true });
+    removed(skillName);
     removedCount++;
   }
 
@@ -187,9 +201,8 @@ function showStatus() {
   const installed = getInstalledSkills();
   if (installed.length > 0) {
     success(`${installed.length} skill(s) installed:`);
-    for (const skill of installed) {
-      const name = skill.replace('.md', '').replace(SKILL_PREFIX, '');
-      info(`/${SKILL_PREFIX}${name}`);
+    for (const skillName of installed) {
+      info(`/${skillName}`);
     }
   } else {
     info('No skills installed');
