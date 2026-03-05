@@ -67,8 +67,17 @@ export interface SearchResult {
   nextPageToken?: string;
 }
 
+export interface ThreadListItem {
+  id: string;
+  snippet?: string;
+  subject?: string;
+  from?: string;
+  date?: string;
+  messageCount?: number;
+}
+
 export interface ThreadResult {
-  threads: Array<{ id: string; snippet?: string }>;
+  threads: ThreadListItem[];
   nextPageToken?: string;
 }
 
@@ -477,7 +486,11 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
   }
 
   /**
-   * List threads.
+   * List threads with enriched metadata.
+   *
+   * After listing thread IDs, fetches the latest message's metadata
+   * (subject, from, date) for each thread in parallel. This eliminates
+   * the N+1 problem where callers had to individually fetch each thread.
    */
   async function listThreads(
     mcpUserId: string,
@@ -496,11 +509,50 @@ export function createGmailClientFactory(deps: GmailClientDependencies) {
         pageToken,
       });
 
+      const rawThreads = response.data.threads ?? [];
+
+      const enriched = await Promise.all(
+        rawThreads.filter(t => t.id).map(async (t) => {
+          try {
+            const threadResponse = await gmail.users.threads.get({
+              userId: 'me',
+              id: t.id!,
+              format: 'metadata',
+              metadataHeaders: ['From', 'Subject', 'Date'],
+            });
+
+            const messages = threadResponse.data.messages ?? [];
+            const latest = messages[messages.length - 1];
+            const headers = latest?.payload?.headers ?? [];
+            const fromHeader = headers.find(
+              (h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'from'
+            );
+            const subjectHeader = headers.find(
+              (h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'subject'
+            );
+            const dateHeader = headers.find(
+              (h: gmail_v1.Schema$MessagePartHeader) => h.name?.toLowerCase() === 'date'
+            );
+
+            return {
+              id: t.id!,
+              snippet: t.snippet ?? latest?.snippet ?? undefined,
+              subject: subjectHeader?.value ?? undefined,
+              from: fromHeader?.value ?? undefined,
+              date: dateHeader?.value ?? undefined,
+              messageCount: messages.length,
+            } as ThreadListItem;
+          } catch {
+            return {
+              id: t.id!,
+              snippet: t.snippet ?? undefined,
+            } as ThreadListItem;
+          }
+        })
+      );
+
       return {
-        threads: (response.data.threads ?? []).map(t => ({
-          id: t.id!,
-          snippet: t.snippet ?? undefined,
-        })),
+        threads: enriched,
         nextPageToken: response.data.nextPageToken ?? undefined,
       };
     } catch (error: unknown) {

@@ -469,6 +469,59 @@ export async function createMcpServer(deps: McpServerDependencies): Promise<McpS
     }
   );
 
+  // ============== TRIAGE SNAPSHOT TOOL ==============
+
+  server.registerTool(
+    'gmail.triageSnapshot',
+    {
+      description:
+        'Get a triage-ready inbox snapshot in one call. Returns thread metadata ' +
+        '(subject, from, date, snippet, messageCount) for up to maxResults inbox threads. ' +
+        'Designed for email triage workflows — provides enough context to classify and ' +
+        'plan actions without fetching full thread bodies. ' +
+        'Use pageToken to paginate through large inboxes.',
+      inputSchema: {
+        ...structuredSearchFields,
+        query: z.string().optional().describe('Raw Gmail query to merge with structured fields'),
+        maxResults: z.number().int().min(1).max(50).optional().describe('Max threads to return (default 25, max 50)'),
+        pageToken: z.string().optional().describe('Pagination token from a previous triageSnapshot call'),
+        email: emailSchema,
+      },
+    },
+    async (args, extra) => {
+      const mcpUserId = getMcpUserId(extra);
+
+      try {
+        const builtQuery = buildSearchQuery({
+          ...(args as StructuredSearchParams),
+          scope: (args as StructuredSearchParams).scope ?? 'inbox',
+        }) || 'in:inbox';
+
+        const result = await gmailClient.listThreads(
+          mcpUserId,
+          builtQuery,
+          args.maxResults ?? 25,
+          args.pageToken,
+          args.email
+        );
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              threadCount: result.threads.length,
+              hasMore: Boolean(result.nextPageToken),
+              nextPageToken: result.nextPageToken ?? undefined,
+              threads: result.threads,
+            }),
+          }],
+        };
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
   // ============== ORGANIZE TOOL ==============
 
   const ORGANIZE_ACTIONS = [
